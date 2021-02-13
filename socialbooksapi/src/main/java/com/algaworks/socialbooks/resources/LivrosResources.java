@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.algaworks.socialbooks.domain.Comentario;
 import com.algaworks.socialbooks.domain.Livro;
 import com.algaworks.socialbooks.services.LivrosService;
-import com.algaworks.socialbooks.services.exceptions.LivroNaoEncontradoException;
 
 @RestController
 @RequestMapping("/livros")
@@ -47,26 +47,16 @@ public class LivrosResources {
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> buscar(@PathVariable("id") Long id) {
-		Livro livro = null;
-		try {
-			 livro = livrosService.buscar(id);
-		} catch (LivroNaoEncontradoException e) {
-			return ResponseEntity.notFound().build();
-		}
-						
+		Livro livro = livrosService.buscar(id);						
 		return ResponseEntity.status(HttpStatus.OK).body(livro);
 	}
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-	public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
-		try {
-			livrosService.deletar(id);
-		} catch (LivroNaoEncontradoException e) {
-			return ResponseEntity.notFound().build();
-		}
-		return ResponseEntity.noContent().build();
-		
+	public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {		
+		livrosService.deletar(id);		
+		return ResponseEntity.noContent().build();		
 	}
+	
 	/**
 	 * Realiza um setId para Livro para garantir que é o livro a ser atualizado
 	 * save() realiza um merge, caso a entidade com tal ID já exista ele atualiza,
@@ -77,14 +67,25 @@ public class LivrosResources {
 	 * @return
 	 */
 	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)	
-	public ResponseEntity<Void> atualizar(@RequestBody Livro livro, @PathVariable("id") Long id) {
-				
+	public ResponseEntity<Void> atualizar(@RequestBody Livro livro, @PathVariable("id") Long id) {				
 		livro.setId(id);
-		try {
-			livrosService.atualizar(livro);
-		} catch (Exception e) {
-			return ResponseEntity.noContent().build();
-		}		
+		livrosService.atualizar(livro);
 		return ResponseEntity.noContent().build();
+	}
+	
+	@RequestMapping(value = "/{id}/comentarios", method = RequestMethod.POST)
+	public ResponseEntity<Void> adicionarComentario(@PathVariable Long id, @RequestBody Comentario comentario) {
+		
+		livrosService.salvarComentario(id, comentario);
+		
+		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
+		return ResponseEntity.created(uri).build();
+	}
+	
+	@RequestMapping(value = "/{id}/comentarios", method = RequestMethod.GET)
+	public ResponseEntity<List<Comentario>> listarComentarios(@PathVariable("id") Long livroId){
+		List<Comentario> comentarios = livrosService.listarComentarios(livroId);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(comentarios);
 	}
 }
